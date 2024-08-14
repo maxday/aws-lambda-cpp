@@ -3,7 +3,7 @@ project(aws-lambda-runtime-tests LANGUAGES CXX)
 include(FetchContent)
 FetchContent_Declare(gtest
   QUIET
-  URL https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+  URL https://github.com/google/googletest/archive/v1.15.2.tar.gz
 )
 # configure build of googletest
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
