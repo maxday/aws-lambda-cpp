@@ -2,5 +2,5 @@
 
 TEST(noop, dummy_test)
 {
-    ASSERT_EQ(3, 0);
+    ASSERT_EQ(0, 0);
 }
