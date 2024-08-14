@@ -34,7 +34,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Test It
-      run: cd tests && make && ctest
+      run: cd build && make && ctest
 
   build-on-arm-too:
     runs-on: ubuntu-latest
