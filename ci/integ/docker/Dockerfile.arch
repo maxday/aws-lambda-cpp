@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/archlinux:latest AS builder
+FROM public.ecr.aws/docker/library/archlinux:latest
 
 RUN pacman -Sy --noconfirm cmake ninja clang curl git
 
@@ -11,10 +11,4 @@ RUN mkdir build && cd build && \
     cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTS=ON && \
     ninja
 
-FROM public.ecr.aws/lambda/provided:al2023
-
-COPY --from=builder /src/build/tests/resources/lambda-test-fun /var/task/bootstrap
-
-RUN chmod +x /var/task/bootstrap
-
-ENTRYPOINT ["/var/task/bootstrap"]
+ENTRYPOINT ["/src/build/tests/resources/lambda-test-fun"]

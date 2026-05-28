@@ -1,18 +1,12 @@
-FROM public.ecr.aws/docker/library/alpine:3.23 AS builder
+FROM public.ecr.aws/docker/library/alpine:3.23
 
-RUN apk add --no-cache cmake curl-dev g++ git libexecinfo-dev ninja openssl-libs-static zlib-dev
+RUN apk add --no-cache cmake curl-dev g++ git ninja
 
 WORKDIR /src
 COPY . .
 
 RUN mkdir build && cd build && \
-    cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTS=ON -DCMAKE_EXE_LINKER_FLAGS="-static" && \
+    cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTS=ON && \
     ninja
 
-FROM public.ecr.aws/lambda/provided:al2023
-
-COPY --from=builder /src/build/tests/resources/lambda-test-fun /var/task/bootstrap
-
-RUN chmod +x /var/task/bootstrap
-
-ENTRYPOINT ["/var/task/bootstrap"]
+ENTRYPOINT ["/src/build/tests/resources/lambda-test-fun"]

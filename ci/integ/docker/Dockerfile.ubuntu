@@ -1,4 +1,4 @@
-FROM public.ecr.aws/ubuntu/ubuntu:24.04 AS builder
+FROM public.ecr.aws/ubuntu/ubuntu:24.04
 
 RUN apt-get update && apt-get install -y clang zlib1g-dev libssl-dev libcurl4-openssl-dev cmake ninja-build git
 
@@ -11,10 +11,4 @@ RUN mkdir build && cd build && \
     cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTS=ON && \
     ninja
 
-FROM public.ecr.aws/lambda/provided:al2023
-
-COPY --from=builder /src/build/tests/resources/lambda-test-fun /var/task/bootstrap
-
-RUN chmod +x /var/task/bootstrap
-
-ENTRYPOINT ["/var/task/bootstrap"]
+ENTRYPOINT ["/src/build/tests/resources/lambda-test-fun"]

@@ -29,6 +29,8 @@ else()
 endif()
 
 
+add_subdirectory(resources)
+
 find_package(AWSSDK COMPONENTS lambda iam QUIET)
 
 if(AWSSDK_FOUND)
@@ -42,8 +44,6 @@ if(AWSSDK_FOUND)
 
     include(GoogleTest)
     gtest_discover_tests(${PROJECT_NAME} EXTRA_ARGS "--aws_prefix=${TEST_RESOURCE_PREFIX}")
-
-    add_subdirectory(resources)
 else()
     message(STATUS "Integration tests skipped: AWS SDK not found or not in GitHub Actions environment")
 endif()
