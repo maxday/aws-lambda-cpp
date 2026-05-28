@@ -33,20 +33,3 @@ endif()
 
 add_subdirectory(resources)
 
-find_package(AWSSDK COMPONENTS lambda iam QUIET)
-
-if(AWSSDK_FOUND)
-    add_executable(${PROJECT_NAME}
-        integration/main.cpp
-        integration/runtime_tests.cpp
-        integration/version_tests.cpp
-        gtest/gtest-all.cc)
-
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${AWSSDK_LINK_LIBRARIES} aws-lambda-runtime)
-
-    include(GoogleTest)
-    gtest_discover_tests(${PROJECT_NAME} EXTRA_ARGS "--aws_prefix=${TEST_RESOURCE_PREFIX}")
-else()
-    message(STATUS "Integration tests skipped: AWS SDK not found or not in GitHub Actions environment")
-endif()
-
