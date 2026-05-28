@@ -13,7 +13,7 @@ case "$OS" in
     update-alternatives --set c++ /usr/bin/clang++
     ;;
   alpine)
-    apk add --no-cache bash cmake curl-dev g++ git libexecinfo-dev ninja openssl-libs-static zlib-dev zip tar
+    apk add --no-cache bash cmake curl-dev g++ git ninja zlib-dev zip tar
     ;;
   arch)
     pacman -Sy --noconfirm cmake ninja clang curl zip git
