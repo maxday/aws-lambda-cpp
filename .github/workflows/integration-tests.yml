@@ -124,6 +124,17 @@ jobs:
         run: |
           aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" 2>/dev/null || \
             aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+          aws ecr set-repository-policy --repository-name "$ECR_REPOSITORY" --policy-text '{
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "LambdaECRImageRetrievalPolicy",
+                "Effect": "Allow",
+                "Principal": { "Service": "lambda.amazonaws.com" },
+                "Action": ["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer"]
+              }
+            ]
+          }'
 
       - name: Build and push Docker image
         env:
