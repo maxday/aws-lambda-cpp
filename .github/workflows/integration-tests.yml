@@ -148,7 +148,7 @@ jobs:
           architectures: ${{ matrix.build.lambda_arch }}
           timeout: 30
           role: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
-          environment: '{"_HANDLER":"${{ matrix.test.handler }}"}'
+          environment: '{"HANDLER":"${{ matrix.test.handler }}"}'
 
       - name: Invoke Lambda function
         run: ./ci/integ/invoke.sh "${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}" "${{ matrix.test.payload }}"
