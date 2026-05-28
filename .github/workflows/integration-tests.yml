@@ -104,6 +104,12 @@ jobs:
             handler: crash_backtrace
             payload: ""
             assertion: contains
+        exclude:
+          # Alpine uses musl which doesn't provide backtrace()
+          - build:
+              os: alpine
+            test:
+              name: crash_backtrace
 
     steps:
       - uses: actions/checkout@v4
