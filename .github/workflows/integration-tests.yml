@@ -162,7 +162,9 @@ jobs:
           environment: '{"HANDLER":"${{ matrix.test.handler }}"}'
 
       - name: Invoke Lambda function
-        run: ./ci/integ/invoke.sh "${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}" "${{ matrix.test.payload }}"
+        env:
+          PAYLOAD: ${{ matrix.test.payload }}
+        run: ./ci/integ/invoke.sh "${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}" "$PAYLOAD"
 
       - name: Assert result
         run: ./ci/integ/assert.sh ${{ matrix.test.assertion }} ${{ matrix.test.name }}
