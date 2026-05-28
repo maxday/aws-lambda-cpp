@@ -25,23 +25,18 @@ jobs:
           - os: al2023
             container: public.ecr.aws/amazonlinux/amazonlinux:2023
             runner: ubuntu-latest
-            extra_cmake_args: ""
           - os: al2023-arm
             container: public.ecr.aws/amazonlinux/amazonlinux:2023
             runner: ubuntu-24.04-arm
-            extra_cmake_args: ""
           - os: ubuntu
             container: public.ecr.aws/ubuntu/ubuntu:24.04
             runner: ubuntu-latest
-            extra_cmake_args: ""
           - os: alpine
             container: public.ecr.aws/docker/library/alpine:3.23
             runner: ubuntu-latest
-            extra_cmake_args: ""
           - os: arch
             container: public.ecr.aws/docker/library/archlinux:latest
             runner: ubuntu-latest
-            extra_cmake_args: "-DENABLE_SANITIZERS=ON"
 
     steps:
       - name: Install checkout prerequisites
@@ -61,7 +56,7 @@ jobs:
 
       - name: Build and run unit tests
         shell: bash
-        run: ./ci/integ/unit-test.sh ${{ matrix.os }} "${{ matrix.extra_cmake_args }}"
+        run: ./ci/integ/unit-test.sh ${{ matrix.os }}
 
   integration-test:
     runs-on: ${{ matrix.build.runner }}

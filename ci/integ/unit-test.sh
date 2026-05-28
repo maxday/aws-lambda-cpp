@@ -2,16 +2,17 @@
 set -euo pipefail
 
 OS=$1
-EXTRA_CMAKE_ARGS=${2:-}
 
+CMAKE_ARGS=""
 if [ "$OS" = "arch" ]; then
   export CC=/usr/bin/clang CXX=/usr/bin/clang++
+  CMAKE_ARGS="-DENABLE_SANITIZERS=ON"
 fi
 
 mkdir -p build && cd build
 cmake .. -GNinja \
   -DCMAKE_BUILD_TYPE=Debug \
   -DENABLE_TESTS=ON \
-  $EXTRA_CMAKE_ARGS
+  $CMAKE_ARGS
 ninja
 ctest --output-on-failure
