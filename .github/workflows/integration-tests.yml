@@ -118,6 +118,13 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Ensure ECR repository exists
+        env:
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" 2>/dev/null || \
+            aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
@@ -152,3 +159,10 @@ jobs:
       - name: Cleanup Lambda function
         if: always()
         run: aws lambda delete-function --function-name "${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}" 2>/dev/null || true
+
+      - name: Cleanup ECR image
+        if: always()
+        env:
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}
+        run: aws ecr batch-delete-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$IMAGE_TAG" 2>/dev/null || true
