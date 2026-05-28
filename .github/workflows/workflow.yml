@@ -60,4 +60,4 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Check Formatting
-      run: ./ci/codebuild/format-check.sh
+      run: ./ci/format-check.sh

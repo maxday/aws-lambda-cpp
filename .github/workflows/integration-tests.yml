@@ -1,0 +1,154 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  FUNCTION_PREFIX: lambda-cpp-integ
+
+jobs:
+  unit-test:
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: al2023
+            container: public.ecr.aws/amazonlinux/amazonlinux:2023
+            runner: ubuntu-latest
+            extra_cmake_args: ""
+          - os: al2023-arm
+            container: public.ecr.aws/amazonlinux/amazonlinux:2023
+            runner: ubuntu-24.04-arm
+            extra_cmake_args: ""
+          - os: ubuntu
+            container: public.ecr.aws/ubuntu/ubuntu:24.04
+            runner: ubuntu-latest
+            extra_cmake_args: ""
+          - os: alpine
+            container: public.ecr.aws/docker/library/alpine:3.23
+            runner: ubuntu-latest
+            extra_cmake_args: ""
+          - os: arch
+            container: public.ecr.aws/docker/library/archlinux:latest
+            runner: ubuntu-latest
+            extra_cmake_args: "-DENABLE_SANITIZERS=ON"
+
+    steps:
+      - name: Install checkout prerequisites
+        shell: bash
+        run: |
+          if command -v dnf &> /dev/null; then
+            dnf install -y tar gzip git
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: bash
+        run: ./ci/integ/install-deps.sh ${{ matrix.os }}
+
+      - name: Build and run unit tests
+        shell: bash
+        run: ./ci/integ/unit-test.sh ${{ matrix.os }} "${{ matrix.extra_cmake_args }}"
+
+  integration-test:
+    runs-on: ${{ matrix.build.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - os: al2023
+            runner: ubuntu-latest
+            lambda_arch: x86_64
+          - os: al2023-arm
+            dockerfile: al2023
+            runner: ubuntu-24.04-arm
+            lambda_arch: arm64
+          - os: ubuntu
+            runner: ubuntu-latest
+            lambda_arch: x86_64
+          - os: alpine
+            runner: ubuntu-latest
+            lambda_arch: x86_64
+          - os: arch
+            runner: ubuntu-latest
+            lambda_arch: x86_64
+        test:
+          - name: echo_success
+            handler: echo_success
+            payload: '{"barbaz":"Hello, Lambda!"}'
+            assertion: snapshot
+          - name: echo_unicode
+            handler: echo_success
+            payload: '{"UnicodeText":"画像は1000語の価値がある"}'
+            assertion: snapshot
+          - name: echo_failure
+            handler: echo_failure
+            payload: ""
+            assertion: snapshot
+          - name: binary_response
+            handler: binary_response
+            payload: ""
+            assertion: length
+          - name: crash_backtrace
+            handler: crash_backtrace
+            payload: ""
+            assertion: contains
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}
+          DOCKERFILE: ${{ matrix.build.dockerfile || matrix.build.os }}
+        run: |
+          docker build \
+            -f ci/integ/docker/Dockerfile.$DOCKERFILE \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_ENV"
+
+      - name: Deploy Lambda function
+        uses: aws-actions/aws-lambda-deploy@v1.1.0
+        with:
+          function-name: ${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}
+          package-type: Image
+          image-uri: ${{ env.image_uri }}
+          architectures: ${{ matrix.build.lambda_arch }}
+          timeout: 30
+          role: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
+          environment: '{"_HANDLER":"${{ matrix.test.handler }}"}'
+
+      - name: Invoke Lambda function
+        run: ./ci/integ/invoke.sh "${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}" "${{ matrix.test.payload }}"
+
+      - name: Assert result
+        run: ./ci/integ/assert.sh ${{ matrix.test.assertion }} ${{ matrix.test.name }}
+
+      - name: Cleanup Lambda function
+        if: always()
+        run: aws lambda delete-function --function-name "${{ env.FUNCTION_PREFIX }}-${{ matrix.build.os }}-${{ matrix.test.name }}-${{ github.run_id }}" 2>/dev/null || true
