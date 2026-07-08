@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  release:
+    types: [created]
 
 permissions:
   contents: write
@@ -27,6 +26,8 @@ jobs:
         run: dnf install -y tar gzip git cmake ninja-build gcc-c++ openssl-devel libcurl-devel
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Build in Release mode
         run: |
@@ -88,13 +89,11 @@ jobs:
           gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
             --armor --detach-sign SHA256SUMS
 
-      - name: Create draft release and upload assets
+      - name: Upload assets to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          gh release create "$TAG" \
+          gh release upload "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --draft \
-            --title "$TAG" \
             artifacts/*
