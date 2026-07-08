@@ -1,0 +1,20 @@
+{
+  "name": "aws-lambda-cpp-infra",
+  "version": "1.0.0",
+  "bin": {
+    "infra": "bin/infra.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "cdk": "cdk"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.200.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "aws-cdk": "^2.200.0",
+    "typescript": "~5.8.0"
+  }
+}
