@@ -1,7 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as ssm from "aws-cdk-lib/aws-ssm";
 import { Construct } from "constructs";
 
 export class CodeBuildRunnersStack extends cdk.Stack {
@@ -12,21 +11,6 @@ export class CodeBuildRunnersStack extends cdk.Stack {
     if (!roleArn) {
       throw new Error("AWS_CODEBUILD_RELEASE_ROLE_ARN environment variable is required");
     }
-
-    const connectionArn = ssm.StringParameter.valueForStringParameter(
-      this,
-      "/github/connection-arn"
-    );
-
-    const sourceCredential = new codebuild.CfnSourceCredential(
-      this,
-      "GitHubSourceCredential",
-      {
-        authType: "CODECONNECTIONS",
-        serverType: "GITHUB",
-        token: connectionArn,
-      }
-    );
 
     const codeBuildRole = iam.Role.fromRoleArn(
       this,
@@ -48,7 +32,7 @@ export class CodeBuildRunnersStack extends cdk.Stack {
     ];
 
     for (const runner of runners) {
-      const project = new codebuild.Project(this, runner.name, {
+      new codebuild.Project(this, runner.name, {
         projectName: runner.name,
         source: codebuild.Source.gitHub({
           owner: "maxday",
@@ -72,7 +56,6 @@ export class CodeBuildRunnersStack extends cdk.Stack {
         timeout: cdk.Duration.minutes(60),
         queuedTimeout: cdk.Duration.minutes(480),
       });
-      project.node.addDependency(sourceCredential);
     }
   }
 }
