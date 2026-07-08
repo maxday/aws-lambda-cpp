@@ -8,4 +8,5 @@ new CodeBuildRunnersStack(app, "AwsLambdaCppCodeBuildRunners", {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: "eu-west-1",
   },
+  synthesizer: new cdk.CliCredentialsStackSynthesizer(),
 });
