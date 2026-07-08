@@ -33,9 +33,9 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-latest
+            runner: codebuild-aws-lambda-cpp-test-trigger-x86-${{ github.run_id }}-${{ github.run_attempt }}
           - arch: aarch64
-            runner: ubuntu-24.04-arm
+            runner: codebuild-aws-lambda-cpp-test-trigger-arm64-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Install prerequisites
