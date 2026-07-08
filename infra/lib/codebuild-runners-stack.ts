@@ -26,7 +26,7 @@ export class CodeBuildRunnersStack extends cdk.Stack {
       },
       {
         name: "aws-lambda-cpp-test-trigger-arm64",
-        image: "aws/codebuild/amazonlinux-aarch64-standard:3.0",
+        image: "aws/codebuild/amazonlinux-aarch64-standard:4.0",
         environmentType: "ARM_CONTAINER",
       },
     ];
@@ -54,7 +54,7 @@ export class CodeBuildRunnersStack extends cdk.Stack {
         },
         role: codeBuildRole,
         timeout: cdk.Duration.minutes(60),
-        queuedTimeout: cdk.Duration.minutes(480),
+        queuedTimeout: cdk.Duration.minutes(60),
       });
     }
   }
