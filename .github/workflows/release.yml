@@ -1,14 +1,30 @@
 name: Release
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ github.ref_name }}
+    steps:
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --title "$TAG"
+
   build:
+    needs: create-release
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     container: public.ecr.aws/amazonlinux/amazonlinux:2023
@@ -27,7 +43,7 @@ jobs:
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.ref_name }}
 
       - name: Build in Release mode
         run: |
@@ -50,7 +66,7 @@ jobs:
           name: libaws-lambda-runtime-${{ matrix.arch }}
           path: staging/libaws-lambda-runtime-${{ matrix.arch }}.a
 
-  release:
+  upload:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -92,7 +108,7 @@ jobs:
       - name: Upload assets to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.ref_name }}
         run: |
           gh release upload "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
