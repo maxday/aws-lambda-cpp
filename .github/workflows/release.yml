@@ -95,7 +95,7 @@ jobs:
 
       - name: Import GPG key from Secrets Manager
         env:
-          GPG_SECRET_ID: lambda-runtimes/gpg-signing-key
+          GPG_SECRET_ID: lambda-runtimes/cpp/gpg-signing-key
         run: |
           # Isolate the keyring to the runner's workspace so nothing leaks into
           # the default ~/.gnupg, and keep the key material off disk entirely:
