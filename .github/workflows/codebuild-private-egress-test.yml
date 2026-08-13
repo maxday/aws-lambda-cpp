@@ -15,6 +15,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Diagnose GitHub Actions log-upload endpoints
+        run: |
+          set +e
+          echo "===== ACTIONS / GITHUB URL env (no tokens) ====="
+          env | grep -iE 'ACTIONS_[A-Z_]*URL|ACTIONS_RESULTS|GITHUB_SERVER_URL|GITHUB_API_URL|GITHUB_GRAPHQL_URL' | sort
+          echo "===== connectivity probe ====="
+          for h in \
+            pipelines.actions.githubusercontent.com \
+            broker.actions.githubusercontent.com \
+            results-receiver.actions.githubusercontent.com \
+            codeload.github.com \
+            objects.githubusercontent.com ; do
+            echo "----- $h -----"
+            getent hosts "$h" && echo "DNS_OK $h" || echo "DNS_FAIL $h"
+            curl -sS -o /dev/null -w "HTTP=%{http_code} connect_time=%{time_connect}\n" --max-time 15 "https://$h/" || echo "CONNECT_FAIL $h rc=$?"
+          done
+          echo "diagnostic step done"
+
       - name: Attempt non-GitHub egress (expected to FAIL)
         run: |
           echo "Egress is locked to GitHub only; reaching example.com must fail."
