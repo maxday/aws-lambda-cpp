@@ -1,0 +1,21 @@
+name: CodeBuild Private Egress Test
+
+# Manual smoke test for the egress-locked release runner VPC.
+# The x86 CodeBuild runner now runs inside a VPC whose AWS Network Firewall only
+# allows GitHub egress. Reaching any other host must be dropped, so the curl step
+# below is EXPECTED TO FAIL. A failed run means the egress lock is working.
+on:
+  workflow_dispatch:
+
+jobs:
+  egress-test:
+    runs-on:
+      - codebuild-aws-lambda-cpp-test-trigger-x86-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Attempt non-GitHub egress (expected to FAIL)
+        run: |
+          echo "Egress is locked to GitHub only; reaching example.com must fail."
+          curl --verbose --max-time 30 https://example.com
